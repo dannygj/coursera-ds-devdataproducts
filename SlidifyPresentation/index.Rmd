@@ -1,0 +1,137 @@
+---
+title       : Sensitity Analysis Call and Put Option
+subtitle    : 
+author      : 
+job         : 
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+ext_widgets : {rCharts: libraries/highcharts}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(rCharts)
+library(dplyr)
+library(knitr)
+
+options(RCHART_WIDTH = 1000, RCHART_HEIGHT = 500)
+knitr::opts_chunk$set(comment = NA, results = 'asis', tidy = F, message = F)
+
+```
+
+```{r dataPrep, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+data.ttm <- data.frame()
+data.vola = data.frame()
+data.strike = data.frame()
+data.stock = data.frame()
+    
+# calculate price for different TTM
+pctValues <- seq(from = 0.5, to = 1.5, by = 0.05)
+
+strikePrice <- 10
+stockPrice <- 10 
+vola <- 0.2
+ttm <- 1
+rf <- 0.05
+
+# for TTM
+for(pctValue in pctValues){
+  
+    #ttm
+    x <- pctValue * ttm
+    call <- blackscholes(S = stockPrice, X = strikePrice,rf = rf, T = x, sigma = vola)[1]
+    put <- blackscholes(S = stockPrice, X = strikePrice,rf = rf, T = x, sigma = vola)[2]
+    data.ttm <- rbind(data.ttm, c(x, call , put ))
+    
+    x <- pctValue * stockPrice
+    call <- blackscholes(S = x, X = strikePrice,rf = rf, T = ttm, sigma = vola)[1]
+    put <- blackscholes(S = x, X = strikePrice,rf = rf, T = ttm, sigma = vola)[2]
+    data.stock <- rbind(data.stock, c(x, call , put ))
+    
+    x <- pctValue * strikePrice
+    call <- blackscholes(S = stockPrice, X = x,rf = rf, T = ttm, sigma = vola)[1]
+    put <- blackscholes(S = stockPrice, X = x,rf = rf, T = ttm, sigma = vola)[2]
+    data.strike <- rbind(data.strike, c(x, call , put ))
+    
+    x <- pctValue * vola
+    call <- blackscholes(S = stockPrice, X = strikePrice,rf = rf, T = ttm, sigma = x)[1]
+    put <- blackscholes(S = stockPrice, X = strikePrice,rf = rf, T = ttm, sigma = x)[2]
+    data.vola <- rbind(data.vola , c(x, call , put ))
+
+}
+
+colnames(data.vola) <- c("x", "call", "put")
+colnames(data.strike) <- c("x", "call", "put")
+colnames(data.stock) <- c("x", "call", "put")
+colnames(data.ttm) <- c("x", "call", "put")
+
+drawChart <- function(data, xAxisLabel){
+  
+    chart <- Highcharts$new()
+  chart$chart(type="line")
+  chart$title(text="Call and Put Option Pricing")
+  chart$yAxis(title = list(text ="Option Price"))
+  chart$xAxis(title = list(text =as.character(xAxisLabel)))
+  chart$series(name = "Call", data = toJSONArray2(select(data, x, call) %>% arrange(x), json = F, names = F))
+  chart$series(name = "Put", data = toJSONArray2(select(data, x, put) %>% arrange(x), json = F, names = F))
+  chart$tooltip(shared=T, useHTML=F, crosshairs=T, valueDecimals=4)
+  return(chart)
+  
+}
+
+```
+
+
+## Introduction
+
+The following slides will give an overview of how option values change if either time to maturity, stock price, strike price or volatility are adjusted, everything else equal.
+Generally, the values are set to:
+* Strike Price: 10
+* Stock Price: 10
+* Volatility: 0.20
+* Time to Maturity: 1.0
+* Interest Rate: 0.05
+
+--- .class #id 
+
+## How Does the Volatility Affect the Option Price?
+
+```{r chartVola, results='asis', echo=FALSE, comment=NA,tidy=FALSE}
+drawChart(data.vola, "Volatility")
+```
+
+--- .class #id 
+
+## How Does the Strike Price Affect the Option Price?
+
+```{r chartStrike, results='asis', echo=FALSE}
+
+drawChart(data.strike, "Strike Price")
+
+```
+
+--- .class #id 
+
+## How Does the Stock Price Affect the Option Price?
+
+```{r chartStock, results='asis', echo=FALSE}
+
+drawChart(data.stock, "Stock Price")
+
+```
+
+--- .class #id 
+
+## How Does the Time to MaturityAffect the Option Price?
+
+```{r chartTTM, results='asis', echo=FALSE}
+
+drawChart(data.ttm, "Time to Maturity")
+
+```
+
+--- .class #id 
+
