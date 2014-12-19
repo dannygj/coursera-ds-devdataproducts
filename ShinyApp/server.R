@@ -19,11 +19,10 @@ shinyServer(function(input, output) {
   
   chartData <- reactive({
     
-    chart.data <- data.frame(x = numeric(n), call = numeric(n), put =numeric(n), stringsAsFactors = FALSE)
+    chart.data <- data.frame()
     
     # calculate price for different TTM
     pctValues <- seq(from = 0.5, to = 1.5, by = 0.05)
-    counter <- 0
     
     strikePrice <- as.numeric(input$X)
     stockPrice <- as.numeric(input$S)
