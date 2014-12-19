@@ -7,7 +7,6 @@ framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
 highlighter : highlight.js  # {highlight.js, prettify, highlight}
 hitheme     : tomorrow      # 
 widgets     : []            # {mathjax, quiz, bootstrap}
-ext_widgets : {rCharts: libraries/highcharts}
 mode        : selfcontained # {standalone, draft}
 knit        : slidify::knit2slides
 ---
@@ -15,10 +14,10 @@ knit        : slidify::knit2slides
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 library(rCharts)
 library(dplyr)
+library(ggplot2)
 library(knitr)
 
-options(RCHART_WIDTH = 1000, RCHART_HEIGHT = 500)
-knitr::opts_chunk$set(comment = NA, results = 'asis', tidy = F, message = F)
+#knitr::opts_chunk$set(echo=F)
 
 ```
 
@@ -70,15 +69,10 @@ colnames(data.ttm) <- c("x", "call", "put")
 
 drawChart <- function(data, xAxisLabel){
   
-    chart <- Highcharts$new()
-  chart$chart(type="line")
-  chart$title(text="Call and Put Option Pricing")
-  chart$yAxis(title = list(text ="Option Price"))
-  chart$xAxis(title = list(text =as.character(xAxisLabel)))
-  chart$series(name = "Call", data = toJSONArray2(select(data, x, call) %>% arrange(x), json = F, names = F))
-  chart$series(name = "Put", data = toJSONArray2(select(data, x, put) %>% arrange(x), json = F, names = F))
-  chart$tooltip(shared=T, useHTML=F, crosshairs=T, valueDecimals=4)
-  return(chart)
+  g <- ggplot(data, aes(x)) +
+  geom_line(aes(y = call, colour = "Call")) + 
+  geom_line(aes(y = put, colour = "Put")) + labs(title = "Option Pricing", x = xAxisLabel, y = "Option Price")
+  return(g)
   
 }
 
@@ -99,7 +93,7 @@ Generally, the values are set to:
 
 ## How Does the Volatility Affect the Option Price?
 
-```{r chartVola, results='asis', echo=FALSE, comment=NA,tidy=FALSE}
+```{r chartVola, echo=FALSE}
 drawChart(data.vola, "Volatility")
 ```
 
@@ -107,7 +101,7 @@ drawChart(data.vola, "Volatility")
 
 ## How Does the Strike Price Affect the Option Price?
 
-```{r chartStrike, results='asis', echo=FALSE}
+```{r chartStrike, echo=FALSE}
 
 drawChart(data.strike, "Strike Price")
 
@@ -117,7 +111,7 @@ drawChart(data.strike, "Strike Price")
 
 ## How Does the Stock Price Affect the Option Price?
 
-```{r chartStock, results='asis', echo=FALSE}
+```{r chartStock, echo=FALSE}
 
 drawChart(data.stock, "Stock Price")
 
@@ -127,11 +121,10 @@ drawChart(data.stock, "Stock Price")
 
 ## How Does the Time to MaturityAffect the Option Price?
 
-```{r chartTTM, results='asis', echo=FALSE}
+```{r chartTTM, echo=FALSE}
 
 drawChart(data.ttm, "Time to Maturity")
 
 ```
 
 --- .class #id 
-
